@@ -125,7 +125,7 @@ rss:
       url: "https://feeds.feedburner.com/rsscna/politics"
 
     # ── Yahoo 奇摩股市 ──
-    id: "yahoo-gnews"
+    - id: "yahoo-gnews"
       name: "Yahoo股市"
       url: "https://news.google.com/rss/search?q=site:tw.stock.yahoo.com+when:1d&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
     # ── 鉅亨網（走 Google News 代抓）──
