@@ -125,19 +125,9 @@ rss:
       url: "https://feeds.feedburner.com/rsscna/politics"
 
     # ── Yahoo 奇摩股市 ──
-    - id: "yahoo-tw-market"
-      name: "Yahoo股市 台股動態"
-      url: "https://tw.stock.yahoo.com/rss?category=tw-market"
-    - id: "yahoo-tw-news"
-      name: "Yahoo股市 最新新聞"
-      url: "https://tw.stock.yahoo.com/rss?category=news"
-    - id: "yahoo-intl-markets"
-      name: "Yahoo股市 國際財經"
-      url: "https://tw.stock.yahoo.com/rss?category=intl-markets"
-    - id: "yahoo-funds-news"
-      name: "Yahoo股市 基金動態"
-      url: "https://tw.stock.yahoo.com/rss?category=funds-news"
-
+    id: "yahoo-gnews"
+      name: "Yahoo股市"
+      url: "https://news.google.com/rss/search?q=site:tw.stock.yahoo.com+when:1d&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
     # ── 鉅亨網（走 Google News 代抓）──
     - id: "cnyes-gnews"
       name: "鉅亨網"
