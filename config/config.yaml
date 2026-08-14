@@ -114,8 +114,7 @@ rss:
   enabled: true
   freshness_filter:
     enabled: true
-    max_age_days: 1
-
+    max_age_days: 2
   feeds:
     # ── 中央社 ──
     - id: "cna-finance"
@@ -124,7 +123,6 @@ rss:
     - id: "cna-politics"
       name: "中央社 政治"
       url: "https://feeds.feedburner.com/rsscna/politics"
-          
 
     # ── Yahoo 奇摩股市 ──
     - id: "yahoo-tw-market"
@@ -133,12 +131,12 @@ rss:
     - id: "yahoo-tw-news"
       name: "Yahoo股市 最新新聞"
       url: "https://tw.stock.yahoo.com/rss?category=news"
-     - id: "yahoo-tw-intl-market"
+    - id: "yahoo-intl-markets"
       name: "Yahoo股市 國際財經"
       url: "https://tw.stock.yahoo.com/rss?category=intl-markets"
-     - id: "yahoo-tw-intl-market":
-      "name: Yahoo股市 基金動態"
-      url: "https://tw.stock.yahoo.com/rss?category=funds-news 
+    - id: "yahoo-funds-news"
+      name: "Yahoo股市 基金動態"
+      url: "https://tw.stock.yahoo.com/rss?category=funds-news"
 
     # ── 鉅亨網（走 Google News 代抓）──
     - id: "cnyes-gnews"
@@ -149,17 +147,11 @@ rss:
     - id: "money-udn"
       name: "經濟日報"
       url: "https://money.udn.com/rssfeed/news/1001/5588"
-    #  ── 工商時報 ──
-    - id: "money-chinatimes"
-      name: "工商時報"
-      url: "site:ctee.com.tw"
-    # 自定义源示例
-    # - id: "custom-feed"
-    #   name: "自定义源"
-    #   url: "https://example.com/feed.xml"
-    #   enabled: false
-    #   max_age_days: 0               # 示例：禁用过滤，推送所有文章
 
+    # ── 工商時報（走 Google News 代抓）──
+    - id: "ctee-gnews"
+      name: "工商時報"
+      url: "https://news.google.com/rss/search?q=site:ctee.com.tw+when:1d&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
 
 # ===============================================================
 # 4. 报告模式
