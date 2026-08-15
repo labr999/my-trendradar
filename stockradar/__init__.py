@@ -1,2 +1,3 @@
-"""Phase 2 stock radar for TrendRadar."""
-__version__ = "1.0.0"
+"""StockRadar — 台股選股與回測工具。"""
+
+__version__ = "0.1.0"
