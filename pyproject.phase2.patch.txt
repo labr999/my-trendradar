@@ -1,0 +1,10 @@
+把原 pyproject.toml 的 dependencies 增加：
+    "pandas>=2.2,<3",
+    "numpy>=2.0,<3",
+    "yfinance>=0.2.50,<2",
+
+並把 [project.scripts] 增加：
+stock-radar = "stockradar.__main__:main"
+
+並把 hatch packages 改成：
+packages = ["trendradar", "mcp_server", "stockradar"]
