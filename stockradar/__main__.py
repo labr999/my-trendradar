@@ -1,65 +1,89 @@
 from __future__ import annotations
-import argparse
-import traceback
-from .config import load_config, get_stocks
-from .data import download_history, quote_info
-from .indicators import add_indicators, latest
-from .scorer import score_technical, score_fundamental, final_score
-from .report import build_report
-from .notify import send_telegram, send_slack
 
-def run(config_path: str) -> int:
-    cfg = load_config(config_path)
+import os
+import sys
+from datetime import datetime
+
+from .data import load_all, quote_info
+from .indicators import latest
+from .news import score_all
+from .notify import send
+from .scorer import final_score, score_fundamental, score_news, score_technical
+from .watchlist import as_dict, load
+
+TOP_N = int(os.environ.get("TOP_N", "5"))
+ENABLE_NEWS = os.environ.get("ENABLE_NEWS", "0") == "1"
+
+
+def build_report(rows: list[dict], failed: list) -> str:
+    today = datetime.now().strftime("%m/%d")
+    lines = [f"📊 選股排行 {today}", ""]
+
+    if not rows:
+        lines.append("今日無資料可評分")
+    medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣"]
+    for i, r in enumerate(rows[:TOP_N]):
+        mark = medals[i] if i < len(medals) else f"{i+1}."
+        d = r["detail"]["facets"]
+        parts = []
+        for key, label in (("technical", "技"), ("fundamental", "基"), ("news", "新")):
+            f = d.get(key)
+            if f:
+                parts.append(f"{label}{f['score']}" if f["available"] else f"{label}--")
+        lines.append(f"{mark} {r['symbol']} {r['name']}  {r['score']}分")
+        lines.append(f"   {' '.join(parts)}")
+        reasons = d.get("technical", {}).get("reasons", [])[:3]
+        if reasons:
+            lines.append(f"   💬 {'、'.join(reasons)}")
+        lines.append("")
+
+    if r_missing := [r for r in rows if r["detail"].get("missing")]:
+        miss = {m for r in r_missing for m in r["detail"]["missing"]}
+        lines.append(f"ℹ️ 缺漏資料面向：{'、'.join(miss)}（權重已自動重分配）")
+    if failed:
+        lines.append(f"⚠️ {len(failed)} 檔下載失敗：{', '.join(s for s, _ in failed[:5])}")
+
+    lines.append("")
+    lines.append("⚠️ 程式篩選結果，非投資建議")
+    return "\n".join(lines)
+
+
+def main() -> int:
+    print("讀取觀察名單...")
+    stocks = load()
+    print(f"共 {len(stocks)} 檔\n")
+
+    print("下載股價...")
+    data, failed = load_all(stocks, period="1y")
+    if not data:
+        send("⚠️ StockRadar：所有標的下載失敗，請檢查網路或名單")
+        return 1
+
+    news_map = {}
+    if ENABLE_NEWS:
+        print("\n抓取新聞並評分...")
+        held = [s for s in stocks if s.symbol in data]
+        news_map = score_all(as_dict(held))
+
+    print("\n評分中...")
     rows = []
+    for s in stocks:
+        df = data.get(s.symbol)
+        if df is None:
+            continue
+        tech = score_technical(latest(df))
+        funda = score_fundamental(quote_info(s.symbol, s.market))
+        news = score_news(news_map.get(s.symbol)) if ENABLE_NEWS else None
+        score, detail = final_score(tech, funda, news)
+        rows.append({"symbol": s.symbol, "name": s.name,
+                     "score": score, "detail": detail})
 
-    for stock in get_stocks(cfg):
-        try:
-            df = add_indicators(download_history(
-                stock.symbol, stock.market, cfg.get("data", {}).get("period", "1y")
-            ))
-            if len(df) < 130:
-                print(f"Skip {stock.symbol}: insufficient history")
-                continue
-
-            row = latest(df)
-            tech_score, tech_reasons = score_technical(row)
-            info = quote_info(stock.symbol, stock.market)
-            fund_score, fund_reasons = score_fundamental(info)
-            total = final_score(tech_score, fund_score)
-
-            rows.append({
-                "symbol": stock.symbol,
-                "name": stock.name,
-                "score": total,
-                "technical": tech_score,
-                "fundamental": fund_score,
-                "close": row.get("Close"),
-                "rsi": row.get("RSI14"),
-                "macd": "🟢" if row.get("MACD", 0) > row.get("MACD_SIGNAL", 0) else "🔴",
-                "reasons": tech_reasons + fund_reasons,
-            })
-        except Exception as e:
-            print(f"ERROR {stock.symbol}: {e}")
-            traceback.print_exc()
-
-    rows.sort(key=lambda x: x["score"], reverse=True)
-    min_score = int(cfg.get("scoring", {}).get("min_score", 50))
-    rows = [r for r in rows if r["score"] >= min_score]
-
-    report = build_report(rows)
-    print(report)
-
-    if cfg.get("notifications", {}).get("telegram", True):
-        send_telegram(report)
-    if cfg.get("notifications", {}).get("slack", False):
-        send_slack(report)
+    rows.sort(key=lambda r: -r["score"])
+    report = build_report(rows, failed)
+    print("\n" + report)
+    send(report)
     return 0
 
-def main():
-    parser = argparse.ArgumentParser(description="TrendRadar Phase 2 stock scanner")
-    parser.add_argument("--config", default="config/stock_radar.yaml")
-    args = parser.parse_args()
-    raise SystemExit(run(args.config))
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
