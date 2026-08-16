@@ -1,0 +1,80 @@
+name: Backtest
+
+on:
+  workflow_dispatch:
+    inputs:
+      period:
+        description: "回測期間"
+        type: choice
+        default: "3y"
+        options: ["1y", "2y", "3y", "5y", "10y"]
+      entry:
+        description: "進場分數門檻"
+        type: choice
+        default: "60"
+        options: ["50", "55", "60", "65", "70", "75", "80"]
+      positions:
+        description: "同時持有幾檔"
+        type: choice
+        default: "3"
+        options: ["1", "2", "3", "5", "8"]
+      alloc:
+        description: "資金分配方式"
+        type: choice
+        default: "equal"
+        options: ["equal", "score", "inverse_vol"]
+      trail:
+        description: "移動停利（0 = 不用）"
+        type: choice
+        default: "0"
+        options: ["0", "0.05", "0.08", "0.10", "0.15"]
+      stop:
+        description: "停損"
+        type: choice
+        default: "-0.08"
+        options: ["-0.05", "-0.08", "-0.10", "-0.15"]
+      one_per_group:
+        description: "同產業只買一檔"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install project
+        run: uv sync --frozen --no-dev
+
+      - name: Run backtest
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          ARGS="--period ${{ inputs.period }}"
+          ARGS="$ARGS --entry ${{ inputs.entry }}"
+          ARGS="$ARGS --positions ${{ inputs.positions }}"
+          ARGS="$ARGS --alloc ${{ inputs.alloc }}"
+          ARGS="$ARGS --stop ${{ inputs.stop }}"
+          if [ "${{ inputs.trail }}" != "0" ]; then
+            ARGS="$ARGS --trail ${{ inputs.trail }}"
+          fi
+          if [ "${{ inputs.one_per_group }}" = "true" ]; then
+            ARGS="$ARGS --one-per-group"
+          fi
+          echo "執行參數: $ARGS"
+          uv run python -m stockradar.runner $ARGS --notify
