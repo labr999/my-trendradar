@@ -77,4 +77,4 @@ jobs:
             ARGS="$ARGS --one-per-group"
           fi
           echo "執行參數: $ARGS"
-          uv run python -m stockradar.runner $ARGS 
+          uv run python -m stockradar.runner $ARGS
