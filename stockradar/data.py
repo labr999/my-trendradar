@@ -7,10 +7,14 @@ import yfinance as yf
 
 
 def yf_symbol(symbol: str, market: str) -> str:
+    market = (market or "TW").upper()
+    if symbol.endswith(".TW") or symbol.endswith(".TWO"):
+        return symbol
+    if market == "TWO":
+        return f"{symbol}.TWO"
     if market == "TW":
-        if symbol.endswith(".TW") or symbol.endswith(".TWO"):
-            return symbol
         return f"{symbol}.TW"
+    # 其他市場（如美股）直接用原始代號，不加後綴
     return symbol
 
 
