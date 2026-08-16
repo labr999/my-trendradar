@@ -5,9 +5,9 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from backtest import Trade
-from scorer import score_technical
-from strategy import Rules, buy_cost, check_exit, sell_proceeds
+from .backtest import Trade
+from .scorer import score_technical
+from .strategy import Rules, buy_cost, check_exit, sell_proceeds
 
 LOT = 1000  # 台股一張股數
 
