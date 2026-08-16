@@ -5,9 +5,8 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from scorer import score_technical
-from strategy import (Rules, buy_cost, check_exit, position_size,
-                      sell_proceeds)
+from .scorer import score_technical
+from .strategy import (Rules, buy_cost, check_exit, position_size, sell_proceeds)
 
 
 @dataclass
