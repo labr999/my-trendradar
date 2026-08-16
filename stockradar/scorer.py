@@ -48,58 +48,98 @@ class Facet:
         return int(round(max(0, min(self.raw, self.possible)) / self.possible * 100))
 
 
-# ── 技術面 ────────────────────────────────────────────────
+# ── 技術面（= 策略一：均線多頭 + 120日突破）────────────────
+# 40分 均線多頭排列 | 20分 120日新高 | 15分 距MA5遠近
+# 15分 量能健康度   | 10分 RSI
+#
+# 這個函式取代了原本較簡單的技術面規則。backtest.py / portfolio.py /
+# __main__.py 都是呼叫 score_technical()，所以換掉這裡，
+# 回測跟每日選股會自動用同一套邏輯，不用改呼叫端。
 def score_technical(row) -> Facet:
     raw, reasons = 0, []
 
     close = _num(row.get("Close"))
+    ma5 = _num(row.get("MA5"))
     ma20 = _num(row.get("MA20"))
     ma60 = _num(row.get("MA60"))
     ma120 = _num(row.get("MA120"))
-    rsi = _num(row.get("RSI14"))
-    macd = _num(row.get("MACD"))
-    signal = _num(row.get("MACD_SIGNAL"))
-    vol = _num(row.get("Volume"))
+    high120 = _num(row.get("HIGH120"))
+    volume = _num(row.get("Volume"))
     vol20 = _num(row.get("VOL20"))
-    high60 = _num(row.get("HIGH60"))
+    rsi = _num(row.get("RSI14"))
 
     have = sum(v is not None for v in
-               (close, ma20, ma60, ma120, rsi, macd, signal, vol, vol20, high60))
-    need = 10
+               (close, ma5, ma20, ma60, ma120, high120, volume, vol20, rsi))
+    need = 9
 
-    if None not in (close, ma20, ma60) and close > ma20 > ma60:
-        raw += 10
-        reasons.append("多頭排列")
-    if None not in (ma60, ma120) and ma60 > ma120:
-        raw += 10
-        reasons.append("季線>半年線")
+    # 1. 均線趨勢 40分
+    if None not in (ma5, ma20, ma60, ma120):
+        if ma5 > ma20 > ma60 > ma120:
+            raw += 40
+            reasons.append("MA5>MA20>MA60>MA120")
+        else:
+            if ma5 > ma20:
+                raw += 10
+            if ma20 > ma60:
+                raw += 10
+            if ma60 > ma120:
+                raw += 10
+
+    # 2. 120日新高 20分
+    if None not in (close, high120) and high120 > 0 and close >= high120:
+        raw += 20
+        reasons.append("創120日新高")
+
+    # 3. 距MA5遠近 15分
+    distance = None
+    if None not in (close, ma5) and ma5 > 0:
+        distance = close / ma5 - 1
+        if 0 <= distance <= 0.01:
+            raw += 15
+            reasons.append("MA5附近")
+        elif distance <= 0.03:
+            raw += 12
+            reasons.append("距MA5 3%內")
+        elif distance <= 0.05:
+            raw += 7
+            reasons.append("距MA5 5%內")
+        elif distance > 0.08:
+            raw += 2
+            reasons.append("離MA5偏遠")
+
+    # 4. 成交量健康度 15分
+    if None not in (volume, vol20) and vol20 > 0:
+        ratio = volume / vol20
+        if 1.0 <= ratio <= 2.5:
+            raw += 15
+            reasons.append(f"量能健康 {ratio:.1f}倍")
+        elif ratio > 2.5:
+            raw += 8
+            reasons.append(f"量能偏大 {ratio:.1f}倍")
+        elif ratio >= 0.7:
+            raw += 6
+            reasons.append("量能尚可")
+
+    # 5. RSI 10分
     if rsi is not None:
         if 50 <= rsi <= 70:
-            raw += 15
-            reasons.append(f"RSI {rsi:.0f} 強勢")
-        elif rsi > 80:
-            raw -= 10
-            reasons.append(f"RSI {rsi:.0f} 過熱")
-        elif rsi < 30:
-            raw -= 5
-            reasons.append(f"RSI {rsi:.0f} 弱勢")
-    if None not in (macd, signal) and macd > signal:
-        raw += 10
-        reasons.append("MACD 多頭")
-    if None not in (vol, vol20) and vol20 > 0:
-        ratio = vol / vol20
-        if ratio > 1.5:
             raw += 10
-            reasons.append(f"爆量 {ratio:.1f}倍")
-        elif ratio > 1.2:
-            raw += 5
-            reasons.append("量能放大")
-    if None not in (close, high60) and close > high60:
-        raw += 15
-        reasons.append("突破60日高")
+            reasons.append(f"RSI {rsi:.0f} 強勢區")
+        elif 45 <= rsi < 50 or 70 < rsi <= 75:
+            raw += 6
+            reasons.append(f"RSI {rsi:.0f}")
+        elif rsi > 80:
+            raw += 2
+            reasons.append(f"RSI {rsi:.0f} 過熱")
 
-    # 滿分 = 10+10+15+10+10+15 = 70
-    return Facet(raw, 70, reasons, have, need)
+    # raw 本身就落在 0-100，possible 設 100
+    f = Facet(raw, 100, reasons, have, need)
+    f.distance_to_ma5 = distance  # 給 rank_by_distance 排序用
+    return f
+
+
+# 舊名稱保留為別名，避免有地方還沒改到
+score_strategy1 = score_technical
 
 
 # ── 基本面 ────────────────────────────────────────────────
@@ -161,6 +201,45 @@ def score_fundamental(info: dict) -> Facet:
 
     # 滿分 = 20+20+15+10+15 = 80
     return Facet(raw, 80, reasons, have, need)
+
+
+# ── 策略一輔助函式（score_strategy1 本體已併入 score_technical）──
+def strategy1_trade_plan(row, allocation: float = 0.15,
+                         take_profit_pct: float = 0.08,
+                         stop_loss_pct: float = 0.02) -> dict:
+    """策略一的進出場價位。進場價用 MA5（不是現價），
+    代表『拉回或站上 5 日線再進場』，不是追當前市價。
+    """
+    ma5 = _num(row.get("MA5"))
+    return {
+        "allocation": allocation,
+        "take_profit_pct": take_profit_pct,
+        "stop_loss_pct": stop_loss_pct,
+        "entry_price": ma5,
+        "take_profit_price": ma5 * (1 + take_profit_pct) if ma5 else None,
+        "stop_loss_price": ma5 * (1 - stop_loss_pct) if ma5 else None,
+    }
+
+
+def rank_strategy1(rows_by_symbol: dict) -> list[tuple[str, Facet, dict]]:
+    """rows_by_symbol: {代號: 該股最新一列資料}
+
+    回傳依分數排序的清單，分數相同時距 MA5 越近排越前面
+    （代表現在進場的價格風險比較小）。
+    """
+    ranked = []
+    for sym, row in rows_by_symbol.items():
+        f = score_technical(row)
+        plan = strategy1_trade_plan(row)
+        ranked.append((sym, f, plan))
+
+    def sort_key(item):
+        _, f, _ = item
+        dist = getattr(f, "distance_to_ma5", None)
+        return (f.score, -abs(dist) if dist is not None else -999)
+
+    ranked.sort(key=sort_key, reverse=True)
+    return ranked
 
 
 # ── 新聞面（由 news.py 提供 0-100 分）─────────────────────
