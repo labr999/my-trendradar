@@ -4,3 +4,8 @@
 美股
 股市
 新台幣
+Fed
+Nvidia
+AI
+Taiwan
+TSMC
