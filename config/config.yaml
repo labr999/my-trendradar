@@ -62,7 +62,7 @@ schedule:
 #     只要 api_url 不是你自己部署的实例，都推荐配置 expected_domain
 # ===============================================================
 platforms:
-  enabled: true                        # 是否启用热榜平台抓取（true=启用, false=关闭）
+  enabled: false                        # 是否启用热榜平台抓取（true=启用, false=关闭）
   api_url: ""                            # 热榜数据 API 地址（留空使用默认地址）
                                         # 如果你自行部署了 newsnow，填入你的地址，如: https://your-domain.com/api/s
   sources:
@@ -142,6 +142,27 @@ rss:
     - id: "ctee-gnews"
       name: "工商時報"
       url: "https://news.google.com/rss/search?q=site:ctee.com.tw+when:1d&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
+    # ── CNBC（官方 RSS，商業/市場新聞）──
+    - id: "cnbc-world"
+      name: "CNBC World Top News"
+      url: "https://www.cnbc.com/id/100727362/device/rss/rss.html"
+    - id: "cnbc-business"
+      name: "CNBC Business"
+      url: "https://www.cnbc.com/id/19206666/device/rss/rss.html"
+    - id: "cnbc-economy"
+      name: "CNBC Economy"
+      url: "https://www.cnbc.com/id/20910258/device/rss/rss.html"
+
+    # ── CNN（走 Google News 代抓，官方RSS多半已失效）──
+    - id: "cnn-gnews"
+      name: "CNN"
+      url: "https://news.google.com/rss/search?q=site:cnn.com+when:1d&hl=en-US&gl=US&ceid=US:en"
+
+    # ── Bloomberg（本來就沒有公開RSS，走代抓）──
+    - id: "bloomberg-gnews"
+      name: "Bloomberg"
+      url: "https://news.google.com/rss/search?q=site:bloomberg.com+when:1d&hl=en-US&gl=US&ceid=US:en"
+
 
 # ===============================================================
 # 4. 报告模式
