@@ -11,6 +11,7 @@
 # 1. 基础设置
 # ===============================================================
 app:
+  enable_crawler: true
   # 时区配置（影响所有时间显示、调度系统判断、数据存储）
   # 常用时区：
   #   - Asia/Shanghai (北京时间 UTC+8)
@@ -19,7 +20,7 @@ app:
   # 完整时区列表: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   timezone: "Asia/Shanghai"
   show_version_update: true # 是否显示版本更新提示（true=显示, false=隐藏）
-  enable_crawler: true
+  
 
 
 # ===============================================================
