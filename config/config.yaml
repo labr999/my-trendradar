@@ -139,6 +139,12 @@ rss:
     - id: "bloomberg-gnews"
       name: "Bloomberg"
       url: "https://news.google.com/rss/search?q=site:bloomberg.com+when:1d&hl=en-US&gl=US&ceid=US:en"
+    - id: "wsj-gnews"
+      name: "WSJ"
+      url: "https://news.google.com/rss/search?q=site:wsj.com+when:1d&hl=en-US&gl=US&ceid=US:en" 
+    - id: "economist-gnews"
+      name: "The Economist"
+      url: "https://news.google.com/rss/search?q=site:economist.com+when:1d&hl=en-US&gl=US&ceid=US:en" 
 
 
 # ===============================================================
