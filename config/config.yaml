@@ -68,6 +68,13 @@ platforms:
   api_url: ""                            # 热榜数据 API 地址（留空使用默认地址）
                                         # 如果你自行部署了 newsnow，填入你的地址，如: https://your-domain.com/api/s
   sources:
+    - id: "toutiao"
+      name: "今日头条"
+      expected_domain: "toutiao.com"
+    - id: "baidu"
+      name: "百度热搜"
+      expected_domain: "baidu.com"
+    # ...（你原本完整的 11 個平台，全部貼回去）
     
 
 
