@@ -412,7 +412,7 @@ ai_analysis:
   enabled: true                     # 是否启用 AI 分析（true=启用, false=关闭）—— 总开关
                                     # 开启 schedule 后此项仍为总开关：false=永远不分析，true=由调度控制
 
-  language: "Chinese"               # 分析报告语言（如 "English", "Korean", "法语"）
+  language: "繁體中文（台灣用語）"     # 分析报告语言（如 "English", "Korean", "法语"）
   prompt_file: "ai_analysis_prompt.txt"   # 提示词文件（相对于 config 目录）
 
   mode: "follow_report"             # AI 分析模式（可独立于 report.mode）
@@ -439,7 +439,7 @@ ai_analysis:
 # ===============================================================
 ai_translation:
   enabled: false                     # 是否启用翻译功能（true=启用, false=关闭）
-  language: "中文"                   # 翻译目标语言（如 "English", "Korean", "法语"）
+  language: "繁體中文"               # 翻译目标语言（如 "English", "Korean", "法语"）
   prompt_file: "ai_translation_prompt.txt"   # 提示词文件（相对于 config 目录）
 
   batch_size: 100                   # 每批发送给 AI 的标题数，超过此数量自动分批

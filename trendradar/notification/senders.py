@@ -15,6 +15,7 @@
 每个发送函数都支持分批发送，并通过参数化配置实现与 CONFIG 的解耦。
 """
 
+import os
 import smtplib
 import time
 import json
@@ -540,6 +541,18 @@ def send_to_telegram(
     batches = add_batch_headers(batches, "telegram", batch_size)
 
     print(f"{log_prefix}消息分为 {len(batches)} 批次发送 [{report_type}]")
+
+    # 繁體中文：推送前把簡體轉成台灣正體與用語（Secret/變數 TELEGRAM_TRADITIONAL=false 可關閉）
+    if os.environ.get("TELEGRAM_TRADITIONAL", "true").strip().lower() not in ("0", "false", "no", "off"):
+        try:
+            from opencc import OpenCC
+            _cc = OpenCC("s2twp")
+            _tw = {"英偉達": "輝達", "輝達達": "輝達"}
+            batches = [_cc.convert(b) for b in batches]
+            for _k, _v in _tw.items():
+                batches = [b.replace(_k, _v) for b in batches]
+        except Exception as e:
+            print(f"{log_prefix}繁體轉換失敗，改送原文：{e}")
 
     # 逐批发送
     for i, batch_content in enumerate(batches, 1):
