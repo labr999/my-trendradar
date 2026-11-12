@@ -102,6 +102,11 @@ def _render_ai_analysis_markdown_like(
 
     lines = ["**✨ AI 热点分析**", ""]
 
+    if result.source_summaries:
+        lines.extend(["**各來源重點摘要**", ""])
+        for name, text in result.source_summaries.items():
+            lines.extend([f"**【{name}】**", _format_list_content(text), ""])
+
     if result.core_trends:
         lines.extend(["**核心热点态势**", _format_list_content(result.core_trends), ""])
 
@@ -241,6 +246,11 @@ def render_ai_analysis_telegram(result: AIAnalysisResult) -> str:
         return f"⚠️ AI 分析失败: {_escape_html(result.error)}"
 
     lines = ["<b>✨ AI 热点分析</b>", ""]
+
+    if result.source_summaries:
+        lines.extend(["<b>📰 各來源重點摘要</b>", ""])
+        for name, text in result.source_summaries.items():
+            lines.extend([f"<b>【{_escape_html(name)}】</b>", _escape_html(_format_list_content(text)), ""])
 
     if result.core_trends:
         lines.extend(["<b>核心热点态势</b>", _escape_html(_format_list_content(result.core_trends)), ""])

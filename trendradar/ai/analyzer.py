@@ -24,6 +24,7 @@ class AIAnalysisResult:
     rss_insights: str = ""               # RSS 深度洞察
     outlook_strategy: str = ""           # 研判与策略建议
     standalone_summaries: Dict[str, str] = field(default_factory=dict)  # 独立展示区概括 {源ID: 概括}
+    source_summaries: Dict[str, str] = field(default_factory=dict)  # 各來源重點摘要 {來源: 約300字}
 
     # 基础元数据
     raw_response: str = ""               # 原始响应
@@ -627,6 +628,11 @@ class AIAnalyzer:
             result.signals = data.get("signals", "")
             result.rss_insights = data.get("rss_insights", "")
             result.outlook_strategy = data.get("outlook_strategy", "")
+
+            # 各來源重點摘要
+            src = data.get("source_summaries", {})
+            if isinstance(src, dict):
+                result.source_summaries = {str(k): str(v) for k, v in src.items() if v}
 
             # 解析独立展示区概括
             summaries = data.get("standalone_summaries", {})
